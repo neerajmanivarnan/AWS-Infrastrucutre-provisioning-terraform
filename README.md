@@ -19,169 +19,94 @@ This project demonstrates how to provision a basic AWS infrastructure using Terr
 7. **Elastic IP**: Associated with the network interface.
 8. **EC2 Instance**: An Ubuntu server running Apache web server.
 
-## Terraform Configuration
+9. # Project Setup Instructions
 
-### 1. Provider Configuration
+Thank you for your interest in our project! To get started, please follow the steps below to clone the repository and set up your development environment.
 
-```hcl
-provider "aws" {
-  region = "us-east-1"
-}
-```
-### 2. Virtual private cloud
+## Cloning the Repository
 
-```hcl
-resource "aws_vpc" "prod-vpc" {
-  cidr_block = "10.0.0.0/16"
-  tags = {
-    Name = "Production VPC"
-  }
-}
-```
+1. **Open a Terminal or Command Prompt**: You will need to use a command-line interface to clone the repository.
 
-### 3.Internet gateway
+2. **Clone the Repository**: Run the following command to clone the repository to your local machine:
 
-```hcl
-resource "aws_internet_gateway" "gw" {
-  vpc_id = aws_vpc.prod-vpc.id
-  tags = {
-    Name = "main"
-  }
-}
-```
+    ```bash
+    git clone https://github.com/neerajmanivarnan/AWS-Infrastrucutre-provisioning-terraform.git
+    ```
 
-### 4.Route table
+3. **Navigate to the Project Directory**: Change to the project directory with the following command:
 
-```hcl
-resource "aws_route_table" "route-table" {
-  vpc_id = aws_vpc.prod-vpc.id
+    ```bash
+    cd AWS-Infrastrucutre-provisioning-terraform
+    ```
 
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.gw.id
-  }
+## Setup Instructions
 
-  route {
-    ipv6_cidr_block = "::/0"
-    gateway_id = aws_internet_gateway.gw.id
-  }
+### Configuring AWS Environment Variables
 
-  tags = {
-    Name = "routing table"
-  }
-}
-```
+To set up your AWS access credentials, You must have an IAM User and create the Access key and secret access key.Follow the instructions below for your operating system.
 
-### 5.Subnet
+### For Linux/macOS
 
-```hcl
-resource "aws_subnet" "prod-subnet" {
-  vpc_id            = aws_vpc.prod-vpc.id
-  cidr_block        = "10.0.1.0/24"
-  availability_zone = "us-east-1a"
-  tags = {
-    Name = "production subnet"
-  }
-}
-```
+1. **Open Your Terminal**.
 
-### 6.Route table association
+2. **Set the Environment Variables**: Run the following commands:
 
-```hcl
-resource "aws_route_table_association" "a" {
-  subnet_id      = aws_subnet.prod-subnet.id
-  route_table_id = aws_route_table.route-table.id
-}
-```
+    ```bash
+    export AWS_ACCESS_KEY_ID="your-access-key-id"
+    export AWS_SECRET_ACCESS_KEY="your-secret-access-key"
+    ```
 
-### 7.Security group
+    Replace `your-access-key-id` and `your-secret-access-key` with your actual AWS credentials.
 
-```hcl
-resource "aws_security_group" "security_group_main" {
-  name   = "security group"
-  vpc_id = aws_vpc.prod-vpc.id
+3. **Verify the Environment Variables**: Check if the variables are set correctly by running:
 
-  ingress {
-    description = "HTTPS"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+    ```bash
+    echo $AWS_ACCESS_KEY_ID
+    echo $AWS_SECRET_ACCESS_KEY
+    ```
 
-  ingress {
-    description = "HTTP"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+4. **Persist the Environment Variables**: To make these variables persist across terminal sessions, add the export commands to your shell configuration file (`.bashrc`, `.zshrc`, etc.). For example, if you are using Bash, add the following lines to your `~/.bashrc` file:
 
-  ingress {
-    description = "SSH"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+    ```bash
+    export AWS_ACCESS_KEY_ID="your-access-key-id"
+    export AWS_SECRET_ACCESS_KEY="your-secret-access-key"
+    ```
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-```
+    After editing the file, reload it with:
 
-### 8.Network interface
+    ```bash
+    source ~/.bashrc
+    ```
 
-```hcl
-resource "aws_network_interface" "network_interface" {
-  subnet_id       = aws_subnet.prod-subnet.id
-  private_ips     = ["10.0.1.50"]
-  security_groups = [aws_security_group.security_group_main.id]
-}
-```
+### For Windows Command Prompt
 
-### 9.Elastic IP
+1. **Open Command Prompt**.
 
-```hcl
-resource "aws_eip" "one" {
-  domain                    = "vpc"
-  network_interface         = aws_network_interface.network_interface.id
-  associate_with_private_ip = "10.0.1.50"
-  depends_on                = [aws_internet_gateway.gw]
-}
-```
+2. **Set the Environment Variables**: Run the following commands:
 
-### 10.EC2 instance with web server
+    ```cmd
+    set AWS_ACCESS_KEY_ID=your-access-key-id
+    set AWS_SECRET_ACCESS_KEY=your-secret-access-key
+    ```
 
-```hcl
-resource "aws_instance" "web-server-instance" {
-  ami               = "ami-04a81a99f5ec58529"
-  instance_type     = "t2.micro"
-  availability_zone = "us-east-1a"
-  key_name          = "main-key"
+    Replace `your-access-key-id` and `your-secret-access-key` with your actual AWS credentials.
 
-  network_interface {
-    device_index         = 0
-    network_interface_id = aws_network_interface.network_interface.id
-  }
+3. **Verify the Environment Variables**: Check if the variables are set correctly by running:
 
-  user_data = <<-EOF
-              #!/bin/bash
-              sudo apt update -y
-              sudo apt install apache2 -y
-              sudo systemctl start apache2
-              sudo bash -c 'echo This is my very first web server that I am going to test > /var/www/html/index.html'
-              EOF
+    ```cmd
+    echo %AWS_ACCESS_KEY_ID%
+    echo %AWS_SECRET_ACCESS_KEY%
+    ```
 
-  tags = {
-    Name = "web-server"
-  }
-}
-```
+4. **Persist the Environment Variables**: To make these variables persist across Command Prompt sessions, set them in the system environment variables:
+
+    - Open the **Start Menu**, search for **Environment Variables**, and select **Edit the system environment variables**.
+    - In the **System Properties** window, click on the **Environment Variables** button.
+    - Under **User variables** or **System variables**, click **New** and add the variables `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` with their corresponding values.
+    - Click **OK** to save and apply the changes.
+
+
+
 
 # Applying the Configuration
 
