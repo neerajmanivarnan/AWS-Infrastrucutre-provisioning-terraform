@@ -21,7 +21,7 @@ This project demonstrates how to provision a basic AWS infrastructure using Terr
 
 # Project Setup Instructions
 
-Thank you for your interest in the project! To get started, please follow the steps below to clone the repository and set up your development environment.
+Thank you for your interest in this project! To get started, please follow the steps below to clone the repository and set up your development environment.
 
 ## Cloning the Repository
 
