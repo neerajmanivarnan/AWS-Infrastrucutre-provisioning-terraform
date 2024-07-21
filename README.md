@@ -19,7 +19,7 @@ This project demonstrates how to provision a basic AWS infrastructure using Terr
 7. **Elastic IP**: Associated with the network interface.
 8. **EC2 Instance**: An Ubuntu server running Apache web server.
 
-9. # Project Setup Instructions
+# Project Setup Instructions
 
 Thank you for your interest in our project! To get started, please follow the steps below to clone the repository and set up your development environment.
 
